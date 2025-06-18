@@ -4,10 +4,12 @@ import sys
 import tkinter as tk
 from tkinter import messagebox, Canvas
 
+BASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
+
+
 def is_quest_connected():
     try:
-        base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-        adb_path = os.path.join(base_dir, "adb.exe")
+        adb_path = os.path.join(BASE_PATH, "adb.exe")
         result = subprocess.run([adb_path, "devices"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         lines = result.stdout.strip().split("\n")
         return any("device" in line and not line.startswith("List") for line in lines)
@@ -25,9 +27,8 @@ def cast_screen():
         messagebox.showwarning("המכשיר אינו מחובר", "אנא חבר את המכשיר מראש")
         return
     try:
-        base_dir = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-        bat_path = os.path.join(base_dir, "cast.bat")
-        subprocess.Popen(["cmd.exe", "/c", bat_path])
+        bat_path = os.path.join(BASE_PATH, "cast.bat")
+        subprocess.Popen(["cmd.exe", "/c", bat_path], cwd=BASE_PATH)
     except Exception as e:
         messagebox.showerror("תקלה", f"לא הצליח להריץ cast.bat:\n{e}")
 
