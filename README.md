@@ -1,4 +1,4 @@
-# Quest  Caster 
+# LoginVR Quest Caster 
 
 A lightweight **Python + Tkinter** desktop launcher that makes mirroring your **Meta Quest 2** headset to a Windows PC a one‑click task. Under the hood it simply drives ADB and [scrcpy](https://github.com/Genymobile/scrcpy), but it adds quality‑of‑life features such as colour‑coded connection status, auto‑refresh, and built‑in help.
 
