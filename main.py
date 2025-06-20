@@ -1,36 +1,63 @@
-import subprocess
 import os
 import sys
+import subprocess                      # gives you subprocess.run, .Popen, .CREATE_NO_WINDOW
+from subprocess import PIPE, STDOUT, TimeoutExpired
 import tkinter as tk
 from tkinter import messagebox, Canvas
-from subprocess import run, PIPE
 import webbrowser
-from urllib.parse import quote
+from urllib.parse import quote          # for mailto links
 
-BASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
+def resource_path(name):
+    """
+    Return absolute path to resource, whether running
+    - from source (…/src/main.py)   ->  …/src/<name>
+    - or from a PyInstaller bundle  ->  …/_MEIxxxx/src/<name>
+    """
+    base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    # only add 'src' when it isn't already part of the path
+    if not base.endswith('src'):
+        base = os.path.join(base, 'src')
+    return os.path.join(base, name)
+
+ICON_PATH = resource_path('temp.ico')
 
 # --- constants ---
-REFRESH_INTERVAL_MS = 5000          # 5 seconds
+CREATE_NO_WINDOW = 0x08000000
+REFRESH_INTERVAL_MS = 2000          # 5 seconds
+ADB_TIMEOUT = 4000      # milliseconds (≈4 s)
 COLORS = {
     "device":       "green",
     "unauthorized": "yellow",
     "offline":      "red",
     "":             "red",
 }
+
 def quest_state():
-    adb = os.path.join(BASE_PATH, "adb.exe")
-    out = run([adb, "devices"], stdout=PIPE, text=True, timeout=1).stdout
-    for line in out.splitlines()[1:]:          # skip header
-        parts = line.split()
-        if len(parts) >= 2:
-            return parts[1]                    # "device", "unauthorized", ...
-    return ""                                  # nothing connected
+    adb = resource_path('adb.exe')
+    try:
+        out = subprocess.run(
+            [adb, "devices", "-l"],
+            stdout=PIPE, stderr=STDOUT, text=True,
+            timeout=ADB_TIMEOUT / 1000,
+            creationflags=CREATE_NO_WINDOW             #  ← NEW
+        ).stdout
+        for line in out.splitlines()[1:]:
+            parts = line.split()
+            if len(parts) >= 2:
+                return parts[1]                       # "device", "unauthorized"
+        return ""
+    except TimeoutExpired:
+        # start server silently
+        subprocess.run(
+            [adb, "start-server"],
+            stdout=PIPE, stderr=STDOUT, timeout=5,
+            creationflags=CREATE_NO_WINDOW            #  ← NEW
+        )
+        return ""
 
 # --- refresh logic ---
 def refresh_status(auto=True):
     state = quest_state()
-    print("something")
-    print(state)
     canvas.itemconfig(status_circle, fill=COLORS.get(state, "red"))
 
     if state == "device":
@@ -46,7 +73,7 @@ def refresh_status(auto=True):
 
 def is_quest_connected():
     try:
-        adb_path = os.path.join(BASE_PATH, "adb.exe")
+        adb_path = resource_path('adb.exe')
         result = subprocess.run([adb_path, "devices"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         lines = result.stdout.strip().split("\n")
         return any("device" in line and not line.startswith("List") for line in lines)
@@ -66,8 +93,12 @@ def cast_screen():
             "אנא וודא שהמכשיר מחובר למחשב עם כבל תקני ושהנך במצב מפתח")
         return
     try:
-        bat_path = os.path.join(BASE_PATH, "cast.bat")
-        subprocess.Popen(["cmd.exe", "/c", bat_path], cwd=BASE_PATH)
+        bat_path = resource_path("cast.bat")
+        src_dir  = os.path.dirname(bat_path)        # ← folder that holds cast.bat
+        subprocess.Popen(
+            ["cmd.exe", "/c", bat_path],
+            cwd=src_dir                          # ← use this instead of BASE_PATH
+        )
     except Exception as e:
         messagebox.showerror("תקלה", f"לא הצליח להריץ cast.bat:\n{e}")
 
@@ -88,6 +119,7 @@ def show_about():
 def show_faq():
     win = tk.Toplevel(window)
     win.title("FAQ/Help")
+    win.iconbitmap(ICON_PATH)
     win.resizable(False, False)
 
     tk.Label(
@@ -137,13 +169,10 @@ def show_faq():
 
 # --- GUI ---
 window = tk.Tk()
+window.iconbitmap(ICON_PATH)
 window.title("קאסטינג LoginVR")
 window.geometry("350x220")
 window.resizable(False, False)
-
-icon_path = os.path.join(BASE_PATH, "temp.ico")
-if os.path.exists(icon_path):
-    window.iconbitmap(icon_path)
 
 # --- Menu Bar ---
 menubar = tk.Menu(window)
