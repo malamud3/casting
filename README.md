@@ -62,6 +62,8 @@ python main.py                                       # launch the GUI
 
 ## 🏗️ Building a portable EXE
 
+pyinstaller --noconsole --onefile --add-data "src;src" --icon src/temp.ico main.py
+
 ```bash
 pyinstaller --noconsole --onefile \
   --add-data "src;src" \
