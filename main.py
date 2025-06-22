@@ -3,6 +3,7 @@ import sys
 import subprocess                      # gives you subprocess.run, .Popen, .CREATE_NO_WINDOW
 from subprocess import PIPE, STDOUT, TimeoutExpired
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox, Canvas
 import webbrowser
 from urllib.parse import quote          # for mailto links
@@ -102,19 +103,58 @@ def cast_screen():
     except Exception as e:
         messagebox.showerror("תקלה", f"לא הצליח להריץ cast.bat:\n{e}")
 
+
+def showinfo_rtl(title: str, body: str, ok_text: str = "אישור"):
+    """
+    Replacement for messagebox.showinfo that is right-to-left.
+    • Title bar shows your title
+    • Text is right-aligned and wraps
+    • OK button closes the window
+    """
+    win = tk.Toplevel(window)           # 'window' == your main Tk instance
+    win.title(title)
+    win.resizable(False, False)
+    win.grab_set()                      # make it modal (blocks parent)
+
+    # Ensure the dialog is centred over the parent
+    win.transient(window)
+
+    # Main text label — RTL alignment
+    ttk.Label(
+        win,
+        text=body,
+        justify="right",
+        anchor="e",     # east
+        wraplength=300,
+        font=("Segoe UI", 10)
+    ).pack(padx=20, pady=(20, 10))
+
+    # OK button
+    ttk.Button(
+        win,
+        text=ok_text,
+        command=win.destroy
+    ).pack(pady=(0, 15), ipadx=10)
+
+    win.wait_window()  # block until user closes
+
+
 def show_instructions():
-    messagebox.showinfo("הוראות",
-        "1. הדלק את הקווסט והפעל אפליקציה לשידור\n"
-        "2. חבר את הקווסט למחשב באצעות כבל\n"
-        "3. אשר את הגישה דרך המכשיר\n"
-        '4. לחץ "הצג מסך"')
+
+    text = (
+        "\u202B1. הדלק את הקווסט והפעל אפליקציה לשידור\u202C\n"
+        "\u202B2. חבר את הקווסט למחשב באמצעות כבל\u202C\n"
+        "\u202B3. אשר את הגישה דרך המכשיר\u202C\n"
+        "\u202B4. לחץ \"הצג מסך\"\u202C"
+    )
+    showinfo_rtl("הוראות", text)
 
 def show_about():
     messagebox.showinfo("About",
         "All rights reserved to LoginVR not for sale or distribution - Internal use only\n"
         "Created by Avi Kohen\n"
         "2025\n"
-        "V0.1")
+        "V0.2")
 
 def show_faq():
     win = tk.Toplevel(window)
@@ -171,14 +211,14 @@ def show_faq():
 window = tk.Tk()
 window.iconbitmap(ICON_PATH)
 window.title("קאסטינג LoginVR")
-window.geometry("350x220")
+window.geometry("370x250")
 window.resizable(False, False)
 
 # --- Menu Bar ---
 menubar = tk.Menu(window)
-menubar.add_cascade(label="Instructions", command=show_instructions)
-menubar.add_cascade(label="About", command=show_about)
-menubar.add_cascade(label="FAQ/Help", command=show_faq)
+menubar.add_cascade(label="הוראות", command=show_instructions)
+menubar.add_cascade(label="אודות", command=show_about)
+menubar.add_cascade(label="עזרה", command=show_faq)
 window.config(menu=menubar)
 
 status_text = tk.StringVar()
@@ -192,13 +232,6 @@ status_label = tk.Label(window, textvariable=status_text, font=("Arial", 12))
 status_label.pack(pady=5)
 
 # --- GUI buttons ---
-refresh_btn = tk.Button(
-    window,
-    text="🔄 רענן",
-    font=("Arial", 12),
-    command=lambda: refresh_status(auto=False)
-)
-refresh_btn.pack(pady=5)
 
 cast_btn = tk.Button(window, text="📺 הצג מסך", font=("Arial", 12), command=cast_screen)
 cast_btn.pack(pady=15)
