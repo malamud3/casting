@@ -154,7 +154,7 @@ def show_about():
         "All rights reserved to LoginVR not for sale or distribution - Internal use only\n"
         "Created by Avi Kohen\n"
         "2025\n"
-        "V0.2")
+        "V0.1.1")
 
 def show_faq():
     win = tk.Toplevel(window)
