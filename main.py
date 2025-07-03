@@ -5,6 +5,7 @@ from subprocess import PIPE, STDOUT, TimeoutExpired
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox, Canvas
+from tkinter import simpledialog
 import webbrowser
 from urllib.parse import quote          # for mailto links
 
@@ -102,6 +103,48 @@ def cast_screen():
         )
     except Exception as e:
         messagebox.showerror("תקלה", f"לא הצליח להריץ cast.bat:\n{e}")
+
+
+def wireless_connect():
+    """Pair and connect the Quest headset over Wi‑Fi."""
+    adb = resource_path('adb.exe')
+
+    ip_pair = simpledialog.askstring(
+        "חיבור אלחוטי", "IP:PORT מהמשקפת (לזיווג)")
+    if not ip_pair:
+        return
+
+    code = simpledialog.askstring(
+        "חיבור אלחוטי", "קוד הזיווג (Pairing code)")
+    if code:
+        try:
+            subprocess.run(
+                [adb, "pair", ip_pair, code],
+                stdout=PIPE, stderr=STDOUT, text=True,
+                timeout=ADB_TIMEOUT / 1000,
+                creationflags=CREATE_NO_WINDOW
+            )
+        except Exception as e:
+            messagebox.showerror("תקלה", f"pair נכשל:\n{e}")
+            return
+
+    ip = ip_pair.split(":")[0]
+    adb_port = simpledialog.askstring(
+        "חיבור אלחוטי", "ADB PORT לחיבור", initialvalue="5555")
+    if not adb_port:
+        adb_port = "5555"
+
+    try:
+        out = subprocess.run(
+            [adb, "connect", f"{ip}:{adb_port}"],
+            stdout=PIPE, stderr=STDOUT, text=True,
+            timeout=ADB_TIMEOUT / 1000,
+            creationflags=CREATE_NO_WINDOW
+        ).stdout
+        messagebox.showinfo("Wireless", out.strip())
+        refresh_status(auto=False)
+    except Exception as e:
+        messagebox.showerror("תקלה", f"connect נכשל:\n{e}")
 
 
 def showinfo_rtl(title: str, body: str, ok_text: str = "אישור"):
@@ -235,6 +278,9 @@ status_label.pack(pady=5)
 
 cast_btn = tk.Button(window, text="📺 הצג מסך", font=("Arial", 12), command=cast_screen)
 cast_btn.pack(pady=15)
+
+wireless_btn = tk.Button(window, text="📡 חיבור אלחוטי", font=("Arial", 12), command=wireless_connect)
+wireless_btn.pack(pady=5)
 
 # Auto-refresh once on load
 refresh_status()
