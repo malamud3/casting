@@ -106,45 +106,41 @@ def cast_screen():
 
 
 def wireless_connect():
-    """Pair and connect the Quest headset over Wi‑Fi."""
-    adb = resource_path('adb.exe')
+    """Wait for a USB connection then switch the Quest to Wi‑Fi ADB."""
+    adb = resource_path("adb.exe")
 
-    ip_pair = simpledialog.askstring(
-        "חיבור אלחוטי", "IP:PORT מהמשקפת (לזיווג)")
-    if not ip_pair:
+    ip = simpledialog.askstring("חיבור אלחוטי", "IP של המשקפת")
+    if not ip:
         return
 
-    code = simpledialog.askstring(
-        "חיבור אלחוטי", "קוד הזיווג (Pairing code)")
-    if code:
-        try:
-            subprocess.run(
-                [adb, "pair", ip_pair, code],
-                stdout=PIPE, stderr=STDOUT, text=True,
-                timeout=ADB_TIMEOUT / 1000,
-                creationflags=CREATE_NO_WINDOW
-            )
-        except Exception as e:
-            messagebox.showerror("תקלה", f"pair נכשל:\n{e}")
-            return
+    showinfo_rtl("חיבור אלחוטי", "חבר את הקווסט בכבל USB והמתן לזיהוי…")
 
-    ip = ip_pair.split(":")[0]
-    adb_port = simpledialog.askstring(
-        "חיבור אלחוטי", "ADB PORT לחיבור", initialvalue="5555")
-    if not adb_port:
-        adb_port = "5555"
+    def check_device():
+        state = quest_state()
+        if state == "device":
+            try:
+                subprocess.run(
+                    [adb, "tcpip", "5555"],
+                    stdout=PIPE, stderr=STDOUT, text=True,
+                    timeout=ADB_TIMEOUT / 1000,
+                    creationflags=CREATE_NO_WINDOW,
+                )
+                out = subprocess.run(
+                    [adb, "connect", f"{ip}:5555"],
+                    stdout=PIPE, stderr=STDOUT, text=True,
+                    timeout=ADB_TIMEOUT / 1000,
+                    creationflags=CREATE_NO_WINDOW,
+                ).stdout
+                messagebox.showinfo(
+                    "Wireless", out.strip() + "\nכעת ניתן לנתק את הכבל"
+                )
+                refresh_status(auto=False)
+            except Exception as e:
+                messagebox.showerror("תקלה", f"connect נכשל:\n{e}")
+        else:
+            window.after(REFRESH_INTERVAL_MS, check_device)
 
-    try:
-        out = subprocess.run(
-            [adb, "connect", f"{ip}:{adb_port}"],
-            stdout=PIPE, stderr=STDOUT, text=True,
-            timeout=ADB_TIMEOUT / 1000,
-            creationflags=CREATE_NO_WINDOW
-        ).stdout
-        messagebox.showinfo("Wireless", out.strip())
-        refresh_status(auto=False)
-    except Exception as e:
-        messagebox.showerror("תקלה", f"connect נכשל:\n{e}")
+    check_device()
 
 
 def showinfo_rtl(title: str, body: str, ok_text: str = "אישור"):
