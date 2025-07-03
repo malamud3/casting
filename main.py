@@ -5,6 +5,7 @@ from subprocess import PIPE, STDOUT, TimeoutExpired
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox, Canvas
+from tkinter import simpledialog
 import webbrowser
 from urllib.parse import quote          # for mailto links
 
@@ -102,6 +103,44 @@ def cast_screen():
         )
     except Exception as e:
         messagebox.showerror("תקלה", f"לא הצליח להריץ cast.bat:\n{e}")
+
+
+def wireless_connect():
+    """Wait for a USB connection then switch the Quest to Wi‑Fi ADB."""
+    adb = resource_path("adb.exe")
+
+    ip = simpledialog.askstring("חיבור אלחוטי", "IP של המשקפת")
+    if not ip:
+        return
+
+    showinfo_rtl("חיבור אלחוטי", "חבר את הקווסט בכבל USB והמתן לזיהוי…")
+
+    def check_device():
+        state = quest_state()
+        if state == "device":
+            try:
+                subprocess.run(
+                    [adb, "tcpip", "5555"],
+                    stdout=PIPE, stderr=STDOUT, text=True,
+                    timeout=ADB_TIMEOUT / 1000,
+                    creationflags=CREATE_NO_WINDOW,
+                )
+                out = subprocess.run(
+                    [adb, "connect", f"{ip}:5555"],
+                    stdout=PIPE, stderr=STDOUT, text=True,
+                    timeout=ADB_TIMEOUT / 1000,
+                    creationflags=CREATE_NO_WINDOW,
+                ).stdout
+                messagebox.showinfo(
+                    "Wireless", out.strip() + "\nכעת ניתן לנתק את הכבל"
+                )
+                refresh_status(auto=False)
+            except Exception as e:
+                messagebox.showerror("תקלה", f"connect נכשל:\n{e}")
+        else:
+            window.after(REFRESH_INTERVAL_MS, check_device)
+
+    check_device()
 
 
 def showinfo_rtl(title: str, body: str, ok_text: str = "אישור"):
@@ -235,6 +274,9 @@ status_label.pack(pady=5)
 
 cast_btn = tk.Button(window, text="📺 הצג מסך", font=("Arial", 12), command=cast_screen)
 cast_btn.pack(pady=15)
+
+wireless_btn = tk.Button(window, text="📡 חיבור אלחוטי", font=("Arial", 12), command=wireless_connect)
+wireless_btn.pack(pady=5)
 
 # Auto-refresh once on load
 refresh_status()
