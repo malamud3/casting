@@ -126,7 +126,7 @@ def wireless_connect():
     """Wait for a USB connection then switch the Quest to Wi‑Fi ADB."""
     adb = resource_path("adb.exe")
 
-    showinfo_rtl("חיבור אלחוטי", "חבר את הקווסט בכבל USB והמתן לזיהוי…")
+    showinfo_rtl("חיבור אלחוטי", "חבר את הקווסט בכבל והמתן לזיהוי…")
 
     def check_device():
         state = quest_state()
