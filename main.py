@@ -5,7 +5,7 @@ from subprocess import PIPE, STDOUT, TimeoutExpired
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox, Canvas
-from tkinter import simpledialog
+import re
 import webbrowser
 from urllib.parse import quote          # for mailto links
 
@@ -105,20 +105,37 @@ def cast_screen():
         messagebox.showerror("תקלה", f"לא הצליח להריץ cast.bat:\n{e}")
 
 
+def _get_device_ip(adb: str) -> str | None:
+    """Return the headset's Wi‑Fi IP address using `adb shell`."""
+    try:
+        out = subprocess.run(
+            [adb, "shell", "ip", "-f", "inet", "addr", "show", "wlan0"],
+            stdout=PIPE, stderr=STDOUT, text=True,
+            timeout=ADB_TIMEOUT / 1000,
+            creationflags=CREATE_NO_WINDOW,
+        ).stdout
+        m = re.search(r"inet\s+(\d+\.\d+\.\d+\.\d+)", out)
+        if m:
+            return m.group(1)
+    except Exception:
+        pass
+    return None
+
+
 def wireless_connect():
     """Wait for a USB connection then switch the Quest to Wi‑Fi ADB."""
     adb = resource_path("adb.exe")
 
-    ip = simpledialog.askstring("חיבור אלחוטי", "IP של המשקפת")
-    if not ip:
-        return
-
-    showinfo_rtl("חיבור אלחוטי", "חבר את הקווסט בכבל USB והמתן לזיהוי…")
+    showinfo_rtl("חיבור אלחוטי", "חבר את הקווסט בכבל והמתן לזיהוי…")
 
     def check_device():
         state = quest_state()
         if state == "device":
             try:
+                ip = _get_device_ip(adb)
+                if not ip:
+                    messagebox.showerror("תקלה", "לא נמצא IP של הקווסט")
+                    return
                 subprocess.run(
                     [adb, "tcpip", "5555"],
                     stdout=PIPE, stderr=STDOUT, text=True,
