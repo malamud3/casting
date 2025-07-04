@@ -1,301 +1,340 @@
-import os
-import sys
-import subprocess                      # gives you subprocess.run, .Popen, .CREATE_NO_WINDOW
-from subprocess import PIPE, STDOUT, TimeoutExpired
-import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox, Canvas
-import re
-import webbrowser
-from urllib.parse import quote          # for mailto links
 
-def resource_path(name):
+"""
+LoginVR – Meta Quest casting helper
+Author  : Avi Kohen
+Version : 0.1.1 · 2025
+"""
+
+import os
+import re
+import subprocess
+import sys
+import tkinter as tk
+from tkinter import ttk, messagebox, Canvas
+from subprocess import PIPE, STDOUT
+import webbrowser
+from urllib.parse import quote
+
+# ── paths ────────────────────────────────────────────────────────────────────
+def resource_path(name: str) -> str:
     """
-    Return absolute path to resource, whether running
-    - from source (…/src/main.py)   ->  …/src/<name>
-    - or from a PyInstaller bundle  ->  …/_MEIxxxx/src/<name>
+    Return absolute path to *name*, whether running from source or a PyInstaller
+    bundle.
     """
-    base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-    # only add 'src' when it isn't already part of the path
-    if not base.endswith('src'):
-        base = os.path.join(base, 'src')
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    if not base.endswith("src"):
+        base = os.path.join(base, "src")
     return os.path.join(base, name)
 
-ICON_PATH = resource_path('temp.ico')
 
-# --- constants ---
-CREATE_NO_WINDOW = 0x08000000
-REFRESH_INTERVAL_MS = 2000          # 5 seconds
-ADB_TIMEOUT = 4000      # milliseconds (≈4 s)
-COLORS = {
-    "device":       "green",
-    "unauthorized": "yellow",
-    "offline":      "red",
-    "":             "red",
+ICON_PATH = resource_path("temp.ico")
+
+
+# ── constants ────────────────────────────────────────────────────────────────
+CREATE_NO_WINDOW   = 0x08000000
+REFRESH_INTERVAL_MS = 2000      # GUI auto-refresh
+ADB_TIMEOUT        = 4000       # ms
+WIRELESS_PORT      = "5555"
+
+COLORS = {                       # dot colour by state / transport
+    "wifi":        "green",
+    "device":      "green",
+    "unauthorized":"yellow",
+    "offline":     "red",
+    "":            "red",
 }
 
-def quest_state():
-    adb = resource_path('adb.exe')
-    try:
-        out = subprocess.run(
-            [adb, "devices", "-l"],
-            stdout=PIPE, stderr=STDOUT, text=True,
-            timeout=ADB_TIMEOUT / 1000,
-            creationflags=CREATE_NO_WINDOW             #  ← NEW
-        ).stdout
-        for line in out.splitlines()[1:]:
-            parts = line.split()
-            if len(parts) >= 2:
-                return parts[1]                       # "device", "unauthorized"
-        return ""
-    except TimeoutExpired:
-        # start server silently
-        subprocess.run(
-            [adb, "start-server"],
-            stdout=PIPE, stderr=STDOUT, timeout=5,
-            creationflags=CREATE_NO_WINDOW            #  ← NEW
-        )
-        return ""
-
-# --- refresh logic ---
-def refresh_status(auto=True):
-    state = quest_state()
-    canvas.itemconfig(status_circle, fill=COLORS.get(state, "red"))
-
-    if state == "device":
-        status_text.set("Meta Quest מחובר")
-    elif state == "unauthorized":
-        status_text.set('אשר גישה במכשיר על ידי לחיצה על\n Always allow')
-    else:
-        status_text.set("וודא כי הקווסט דלוק ומחובר למחשב")
-
-    # Automatically schedule the next check
-    if auto:
-        window.after(REFRESH_INTERVAL_MS, refresh_status)
-
-def is_quest_connected():
-    try:
-        adb_path = resource_path('adb.exe')
-        result = subprocess.run([adb_path, "devices"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        lines = result.stdout.strip().split("\n")
-        return any("device" in line and not line.startswith("List") for line in lines)
-    except Exception as e:
-        print("ADB error:", e)
-        return False
-
-def cast_screen():
-    state = quest_state()
-    if state == "unauthorized":
-        messagebox.showwarning("אין גישה",
-            "המכשיר זוהה אך לא אושרה הגישה.\n"
-            "שים את המשקפת על הראש ובחר ב- **Always Allow**.")
-        return
-    if state != "device":
-        messagebox.showwarning("המכשיר אינו מחובר",
-            "אנא וודא שהמכשיר מחובר למחשב עם כבל תקני ושהנך במצב מפתח")
-        return
-    try:
-        bat_path = resource_path("cast.bat")
-        src_dir  = os.path.dirname(bat_path)        # ← folder that holds cast.bat
-        subprocess.Popen(
-            ["cmd.exe", "/c", bat_path],
-            cwd=src_dir                          # ← use this instead of BASE_PATH
-        )
-    except Exception as e:
-        messagebox.showerror("תקלה", f"לא הצליח להריץ cast.bat:\n{e}")
+# remember last Wi-Fi serial so we can cast even with cable attached
+last_wifi_serial: str | None = None
 
 
-def _get_device_ip(adb: str) -> str | None:
-    """Return the headset's Wi‑Fi IP address using `adb shell`."""
-    try:
-        out = subprocess.run(
-            [adb, "shell", "ip", "-f", "inet", "addr", "show", "wlan0"],
-            stdout=PIPE, stderr=STDOUT, text=True,
-            timeout=ADB_TIMEOUT / 1000,
-            creationflags=CREATE_NO_WINDOW,
-        ).stdout
-        m = re.search(r"inet\s+(\d+\.\d+\.\d+\.\d+)", out)
-        if m:
-            return m.group(1)
-    except Exception:
-        pass
+# ── tiny subprocess wrapper (keeps pylint quiet & code DRY) ──────────────────
+def run(cmd, **kw):
+    """subprocess.run() with sensible defaults (check=False by default)."""
+    kw.setdefault("check", False)
+    kw.setdefault("stdout", PIPE)
+    kw.setdefault("stderr", STDOUT)
+    kw.setdefault("text", True)
+    kw.setdefault("timeout", ADB_TIMEOUT / 1000)
+    kw.setdefault("creationflags", CREATE_NO_WINDOW)
+    return subprocess.run(cmd, **kw)
+
+
+# ── adb helpers ──────────────────────────────────────────────────────────────
+def _adb() -> str:
+    return resource_path("adb.exe")
+
+
+def _devices_output() -> str:
+    return run([_adb(), "devices", "-l"]).stdout
+
+
+def quest_state() -> tuple[str | None, str, str | None]:
+    """
+    Return (transport, state, serial), preferring Wi-Fi if present.
+
+    transport ∈ {"wifi", "usb", None}
+    state     ∈ {"device", "unauthorized", "offline", ""}
+    serial    = "192.168…:5555" | "<USB-serial>" | None
+    """
+    wifi_row: tuple[str, str, str] | None = None
+    usb_row:  tuple[str, str, str] | None = None
+
+    for line in _devices_output().splitlines()[1:]:
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        serial, state = parts[0], parts[1]
+
+        if ":" in serial:                  # looks like 192.168.x.x:5555 (TCP/IP)
+            if wifi_row is None:           # keep the first Wi-Fi row only
+                wifi_row = ("wifi", state, serial)
+        else:                              # USB entry
+            if usb_row is None:            # keep the first USB row only
+                usb_row = ("usb", state, serial)
+
+    return wifi_row or usb_row or (None, "", None)
+
+
+
+def _wifi_ip() -> str | None:
+    """Return headset Wi-Fi IP (USB must be connected)."""
+    out = run([_adb(), "shell", "ip", "-f", "inet", "addr", "show", "wlan0"]).stdout
+    m = re.search(r"inet\s+(\d+\.\d+\.\d+\.\d+)", out)
+    return m.group(1) if m else None
+
+
+def wifi_serial_from_adb() -> str | None:
+    """Return first xxx.xxx.xxx.xxx:5555 found in adb devices output."""
+    for line in _devices_output().splitlines()[1:]:
+        tok = line.split()
+        if tok and ":" in tok[0]:
+            return tok[0]
     return None
 
 
-def wireless_connect():
-    """Wait for a USB connection then switch the Quest to Wi‑Fi ADB."""
-    adb = resource_path("adb.exe")
-
-    showinfo_rtl("חיבור אלחוטי", "חבר את הקווסט בכבל והמתן לזיהוי…")
-
-    def check_device():
-        state = quest_state()
-        if state == "device":
-            try:
-                ip = _get_device_ip(adb)
-                if not ip:
-                    messagebox.showerror("תקלה", "לא נמצא IP של הקווסט")
-                    return
-                subprocess.run(
-                    [adb, "tcpip", "5555"],
-                    stdout=PIPE, stderr=STDOUT, text=True,
-                    timeout=ADB_TIMEOUT / 1000,
-                    creationflags=CREATE_NO_WINDOW,
-                )
-                out = subprocess.run(
-                    [adb, "connect", f"{ip}:5555"],
-                    stdout=PIPE, stderr=STDOUT, text=True,
-                    timeout=ADB_TIMEOUT / 1000,
-                    creationflags=CREATE_NO_WINDOW,
-                ).stdout
-                messagebox.showinfo(
-                    "Wireless", out.strip() + "\nכעת ניתן לנתק את הכבל"
-                )
-                refresh_status(auto=False)
-            except Exception as e:
-                messagebox.showerror("תקלה", f"connect נכשל:\n{e}")
-        else:
-            window.after(REFRESH_INTERVAL_MS, check_device)
-
-    check_device()
-
-
+# ── RTL / helper dialogs ─────────────────────────────────────────────────────
 def showinfo_rtl(title: str, body: str, ok_text: str = "אישור"):
-    """
-    Replacement for messagebox.showinfo that is right-to-left.
-    • Title bar shows your title
-    • Text is right-aligned and wraps
-    • OK button closes the window
-    """
-    win = tk.Toplevel(window)           # 'window' == your main Tk instance
+    win = tk.Toplevel(window)
     win.title(title)
     win.resizable(False, False)
-    win.grab_set()                      # make it modal (blocks parent)
-
-    # Ensure the dialog is centred over the parent
+    win.grab_set()
     win.transient(window)
-
-    # Main text label — RTL alignment
-    ttk.Label(
-        win,
-        text=body,
-        justify="right",
-        anchor="e",     # east
-        wraplength=300,
-        font=("Segoe UI", 10)
-    ).pack(padx=20, pady=(20, 10))
-
-    # OK button
-    ttk.Button(
-        win,
-        text=ok_text,
-        command=win.destroy
-    ).pack(pady=(0, 15), ipadx=10)
-
-    win.wait_window()  # block until user closes
+    ttk.Label(win, text=body, justify="right", anchor="e",
+              wraplength=300, font=("Segoe UI", 10)).pack(padx=20, pady=(20, 10))
+    ttk.Button(win, text=ok_text, command=win.destroy).pack(pady=(0, 15), ipadx=10)
+    win.wait_window()
 
 
 def show_instructions():
-
-    text = (
+    msg = (
         "\u202B1. הדלק את הקווסט והפעל אפליקציה לשידור\u202C\n"
         "\u202B2. חבר את הקווסט למחשב באמצעות כבל\u202C\n"
         "\u202B3. אשר את הגישה דרך המכשיר\u202C\n"
         "\u202B4. לחץ \"הצג מסך\"\u202C"
     )
-    showinfo_rtl("הוראות", text)
+    showinfo_rtl("הוראות", msg)
+
 
 def show_about():
-    messagebox.showinfo("About",
-        "All rights reserved to LoginVR not for sale or distribution - Internal use only\n"
-        "Created by Avi Kohen\n"
-        "2025\n"
-        "V0.1.1")
+    messagebox.showinfo(
+        "About",
+        "All rights reserved to LoginVR – internal use only\n"
+        "Created by Avi Kohen · 2025 · v0.1.1",
+    )
+
 
 def show_faq():
-    win = tk.Toplevel(window)
-    win.title("FAQ/Help")
-    win.iconbitmap(ICON_PATH)
-    win.resizable(False, False)
+    faq = tk.Toplevel(window)
+    faq.title("FAQ / Help")
+    faq.iconbitmap(ICON_PATH)
+    faq.resizable(False, False)
 
-    tk.Label(
-        win,
-        text="הפעלת מצב מפתח (לינק לסרטון בגוגל דרייב)",
-        justify="right"
-    ).pack(padx=10, pady=(10,5))
+    tk.Label(faq, text="הפעלת מצב מפתח (סרטון בגוגל דרייב)", justify="right")\
+      .pack(padx=10, pady=(10, 5))
 
     def open_link(_=None):
-        webbrowser.open_new("https://drive.google.com/file/d/1hYf4B3nKVmHpBGViHWfdY_qgfD-LOKPg/view?usp=drive_link")
+        webbrowser.open_new(
+            "https://drive.google.com/file/d/1hYf4B3nKVmHpBGViHWfdY_qgfD-LOKPg/view?usp=drive_link"
+        )
 
-    link = tk.Label(
-        win,
-        text="לחץ כאן",
-        fg="blue", cursor="hand2", underline=True
-    )
-    link.pack(pady=(0,10))
+    link = tk.Label(faq, text="לחץ כאן", fg="blue", cursor="hand2", underline=True)
+    link.pack()
     link.bind("<Button-1>", open_link)
 
-    tk.Label(
-        win,
-        text="לשאלות נוספות\בעיות",
-        justify="right"
-    ).pack(padx=10, pady=(10,5))
-
-
+    tk.Label(faq, text="לשאלות נוספות / בעיות", justify="right")\
+      .pack(pady=(10, 5))
 
     email = "info@loginvr.co.il"
     subject = "אפליקציית קאסטינג"
     body = "הי,\n\nאני צריך עזרה עם…"
 
     def mailto(_=None):
-        uri = (
-            f"mailto:{email}"
-            f"?subject={quote(subject)}"
-            f"&body={quote(body)}"
-        )
+        uri = f"mailto:{email}?subject={quote(subject)}&body={quote(body)}"
         webbrowser.open_new(uri)
 
-    link = tk.Label(
-        win,
-        text=email,
-        fg="blue", cursor="hand2", underline=True
-    )
-    link.pack(pady=(0, 10))
-    link.bind("<Button-1>", mailto)
+    email_lbl = tk.Label(faq, text=email, fg="blue",
+                         cursor="hand2", underline=True)
+    email_lbl.pack(pady=(0, 10))
+    email_lbl.bind("<Button-1>", mailto)
 
-# --- GUI ---
+
+# ── connection actions ──────────────────────────────────────────────────────
+def wireless_connect():
+    """Switch Quest to Wi-Fi ADB."""
+    showinfo_rtl("חיבור אלחוטי", "חבר את הקווסט בכבל והמתן לזיהוי…")
+
+    def _do():
+        transport, state, _ = quest_state()
+        if state != "device":                 # wait until authorised via USB
+            window.after(REFRESH_INTERVAL_MS, _do)
+            return
+
+        ip = _wifi_ip()
+        if not ip:
+            messagebox.showerror("תקלה", "לא נמצא IP של הקווסט")
+            return
+
+        wifi = f"{ip}:{WIRELESS_PORT}"
+        run([_adb(), "tcpip", WIRELESS_PORT])
+        out = run([_adb(), "connect", wifi]).stdout
+
+        global last_wifi_serial
+        last_wifi_serial = wifi
+        messagebox.showinfo("Wi-Fi", out.strip() + "\nכעת ניתן לנתק את הכבל")
+        refresh_status(auto=False)
+
+    _do()
+
+
+def wireless_disconnect():
+    """Tear down Wi-Fi ADB and fall back to USB."""
+    _, _, serial = quest_state()
+    if serial and ":" in serial:              # only when on Wi-Fi
+        run([_adb(), "disconnect", serial])
+    run([_adb(), "usb"])
+
+    global last_wifi_serial
+    last_wifi_serial = None
+    refresh_status(auto=False)
+
+
+def toggle_wireless():
+    if wireless_btn.cget("text").startswith("📡"):
+        wireless_connect()
+    else:
+        wireless_disconnect()
+
+
+def cast_screen():
+    """
+    Launch scrcpy, preferring the Wi-Fi serial if one is in the adb list.
+
+    • If a Wi-Fi row is in `adb devices` → scrcpy -s <wifi:5555>
+    • Else fall back to whatever serial `quest_state()` returned.
+    • The usual “unauthorized / no-device” checks only block when *no* Wi-Fi
+      row is available.
+    """
+    transport, state, serial = quest_state()
+    wifi = wifi_serial_from_adb()        # returns e.g. 192.168.0.15:5555 or None
+
+    # -- sanity checks (skip them when we have a Wi-Fi target anyway) --
+    if not wifi and state == "unauthorized":
+        messagebox.showwarning(
+            "אין גישה",
+            "המכשיר זוהה אך לא אושרה הגישה.\n"
+            "שים את המשקפת על הראש ובחר Always Allow."
+        )
+        return
+
+    if not wifi and state != "device":
+        messagebox.showwarning(
+            "המכשיר אינו מחובר",
+            "אנא ודא שהקווסט מחובר / במצב מפתח."
+        )
+        return
+
+    # choose the target serial: Wi-Fi first, fallback = whatever we saw
+    target = wifi or serial
+
+    bat = resource_path("cast.bat")
+    cwd = os.path.dirname(bat)
+
+    try:
+        if target:
+            subprocess.Popen(
+                ["cmd.exe", "/c", bat, target],
+                cwd=cwd,
+                creationflags=CREATE_NO_WINDOW,
+            )
+        else:                            # extremely rare: no serial at all
+            subprocess.Popen(
+                ["cmd.exe", "/c", bat],
+                cwd=cwd,
+                creationflags=CREATE_NO_WINDOW,
+            )
+    except Exception as exc:
+        messagebox.showerror("תקלה", f"cast.bat נכשל:\n{exc}")
+
+
+
+# ── GUI refresh ─────────────────────────────────────────────────────────────
+def refresh_status(auto: bool = True):
+    transport, state, _ = quest_state()
+    key = transport if transport == "wifi" else state
+    canvas.itemconfig(status_circle, fill=COLORS.get(key, "red"))
+
+    if transport == "wifi" and state == "device":
+        status_text.set("Meta Quest מחובר אלחוטית")
+        wireless_btn.config(text="🔌 נתק אלחוטית", state="normal")
+    elif state == "device":
+        status_text.set("Meta Quest מחובר")
+        wireless_btn.config(
+            text="📡 חיבור אלחוטי",
+            state="normal" if transport == "usb" else "disabled"
+        )
+    elif state == "unauthorized":
+        status_text.set("אשר גישה במכשיר (Always Allow)")
+        wireless_btn.config(text="📡 חיבור אלחוטי", state="disabled")
+    else:
+        status_text.set("וודא שהקווסט דלוק ומחובר למחשב")
+        wireless_btn.config(text="📡 חיבור אלחוטי", state="disabled")
+
+    if auto:
+        window.after(REFRESH_INTERVAL_MS, refresh_status)
+
+
+# ── GUI root window ─────────────────────────────────────────────────────────
 window = tk.Tk()
 window.iconbitmap(ICON_PATH)
 window.title("קאסטינג LoginVR")
 window.geometry("370x250")
 window.resizable(False, False)
 
-# --- Menu Bar ---
+# Menu bar (RTL order – rightmost first)
 menubar = tk.Menu(window)
-menubar.add_cascade(label="הוראות", command=show_instructions)
-menubar.add_cascade(label="אודות", command=show_about)
-menubar.add_cascade(label="עזרה", command=show_faq)
+menubar.add_command(label="הוראות", command=show_instructions)
+menubar.add_command(label="אודות",  command=show_about)
+menubar.add_command(label="עזרה",   command=show_faq)
 window.config(menu=menubar)
 
-status_text = tk.StringVar()
-status_text.set("Status: Unknown")
+status_text = tk.StringVar(value="Status: Unknown")
 
 canvas = Canvas(window, width=30, height=30)
 canvas.pack(pady=(20, 0))
 status_circle = canvas.create_oval(5, 5, 25, 25, fill="red")
 
-status_label = tk.Label(window, textvariable=status_text, font=("Arial", 12))
-status_label.pack(pady=5)
+tk.Label(window, textvariable=status_text, font=("Arial", 12)).pack(pady=5)
 
-# --- GUI buttons ---
-
-cast_btn = tk.Button(window, text="📺 הצג מסך", font=("Arial", 12), command=cast_screen)
+cast_btn = tk.Button(window, text="📺 הצג מסך", font=("Arial", 12),
+                     command=cast_screen)
 cast_btn.pack(pady=15)
 
-wireless_btn = tk.Button(window, text="📡 חיבור אלחוטי", font=("Arial", 12), command=wireless_connect)
+wireless_btn = tk.Button(window, text="📡 חיבור אלחוטי", font=("Arial", 12),
+                         command=toggle_wireless, state="disabled")
 wireless_btn.pack(pady=5)
 
-# Auto-refresh once on load
+# initial status poll
 refresh_status()
 
 window.mainloop()
