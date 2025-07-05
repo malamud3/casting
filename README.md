@@ -68,7 +68,7 @@ python main.py
 ## 🏗️ Build a portable EXE
 
 ```cmd
-pyinstaller --noconsole --onefile --add-data "src;src" --icon src/temp.ico main.py
+python -m PyInstaller --noconsole --onefile --add-data "src;src" --icon src/temp.ico main.py
 ```
 
 `dist\main.exe` is the **single** file you distribute.
