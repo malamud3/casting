@@ -1,169 +1,141 @@
-# LoginVR Quest Caster 
+# LoginVR Quest Caster · v 2.0 (2025-07)
 
-A lightweight **Python + Tkinter** desktop launcher that makes mirroring your **Meta Quest 2** headset to a Windows PC a one‑click task. Under the hood it simply drives ADB and [scrcpy](https://github.com/Genymobile/scrcpy), but it adds quality‑of‑life features such as colour‑coded connection status, auto‑refresh, and built‑in help.
+One-click mirroring of your **Meta Quest 2 / 3 / Pro** to any Windows 10 / 11 PC.  
+Built with **Python + Tkinter** on top of ADB and [scrcpy].
 
----
-
-## ✨ Features
-
-|  Feature                     |  Details                                                                          |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| **Traffic‑light indicator**  |  Red = not detected, Yellow = USB debugging not authorised, Green = ready to cast |
-| **Auto‑refresh loop**        |  Polls `adb get‑state` every 5 seconds (negligible CPU)                           |
-| **Cast button**              |  Runs `cast.bat` which launches scrcpy with your preferred parameters             |
-| **Instructions / About**     |  Accessible from both the top menu and a dedicated button                         |
-| **Clickable e‑mail link**    |  Opens the user’s default mail client via `mailto:`                               |
-| **Custom window & EXE icon** |  Easy branding out‑of‑the‑box                                                     |
+[scrcpy]: https://github.com/Genymobile/scrcpy
 
 ---
 
-## 🖥️ Prerequisites
-
-|  Component                      |  Why you need it                                                                                                          |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **Python ≥ 3.8**                |  Run the app from source or package with PyInstaller                                                                      |
-| **scrcpy + adb**                |  Actual screen casting & USB comms                                                                                        |
-| **Oculus ADB Driver (Windows)** |  Quest 2 recognised properly by ADB – [download here](https://developer.oculus.com/downloads/package/oculus-adb-drivers/) |
-
-> **Tip •** On macOS & Linux no extra driver is required.
+## ✨ What’s new in 2.0
+| Category | Upgrade |
+|----------|---------|
+| **True wireless casting** | Toggle ADB‐over-Wi-Fi with a single button. The app now detects a `…:5555` entry and will cast over TCP/IP even if the USB cable is left plugged in. |
+| **Batch-file hand-off** | `cast.bat` now accepts an *optional* serial parameter (`%1`). If supplied it runs `scrcpy -s %1 …`, otherwise it falls back to the first device. |
+| **Greener status dot** | The traffic-light indicator now shows **green + “מחובר אלחוטית”** when Wi-Fi is active. |
+| **Pylint-clean codebase** | All `subprocess.run()` calls go through a `run()` helper (`check=False` by default). |
 
 ---
 
-## 📂 Folder layout (in‑repo)
+## 🖼️ Quick tour
+
+| State | Circle | Label |
+|-------|--------|-------|
+| **No device / offline** | 🔴 | “וודא שהקווסט דלוק…” |
+| **USB unauthorised** | 🟡 | “אשר גישה במכשיר…” |
+| **USB ready** | 🟢 | “מכשיר מחובר” |
+| **Wi-Fi ready** | 🟢 | “מכשיר מחובר אלחוטית” |
+
+---
+
+## 🖥️ Prerequisites
+
+| Component | Why you need it |
+|-----------|-----------------|
+| **Python ≥ 3.8** | Run from source or package with PyInstaller |
+| **scrcpy + adb** | Actual mirroring & ADB comms |
+| **Oculus ADB driver** | Windows only — makes the Quest appear correctly in `adb devices` |
+
+---
+
+## 📂 Repo layout
 
 ```text
-casting/
-├─ main.py            ← Tkinter GUI
-├─ src/               ← Runtime resources kept as‑is inside the EXE
-│  ├─ adb.exe
-│  ├─ scrcpy.exe
-│  ├─ cast.bat
-│  └─ icon.ico
+quest-caster/
+├─ main.py           ← Tkinter GUI (all logic lives here)
+├─ src/
+│  ├─ adb.exe
+│  ├─ scrcpy.exe
+│  ├─ cast.bat      ← launches scrcpy with your flags
+│  └─ icon.ico
 └─ README.md
 ```
 
-The application always looks for resources relative to `src/`, both when run from source *and* when packed.
+The application always looks for resources inside **`src/`**, both from source and when frozen.
 
 ---
 
-## 🚀 Running from source
+## 🚀 Run from source
 
 ```bash
-# clone & cd into repo
 git clone https://github.com/Avi-Kohen/casting.git
 cd casting
-
-python -m venv .venv && .\.venv\Scripts\activate  # (optional)
-pip install -r requirements.txt                      # tkinter is in stdlib
-python main.py                                       # launch the GUI
+python main.py
 ```
 
 ---
 
-## 🏗️ Building a portable EXE
+## 🏗️ Build a portable EXE
 
+```cmd
 pyinstaller --noconsole --onefile --add-data "src;src" --icon src/temp.ico main.py
-
-```bash
-pyinstaller --noconsole --onefile \
-  --add-data "src;src" \
-  --icon src/icon.ico \
-  main.py
 ```
 
-The resulting `dist/main.exe` contains **everything**, including the `src/` folder, so you can copy the single file to any Windows 10/11 PC.
+`dist\main.exe` is the **single** file you distribute.
 
 ---
 
-## 📖 Usage
+## 📖 How to use (USB ➜ Wi-Fi)
 
-1. **Enable developer mode** in the Quest mobile app.
-2. Plug the headset into your PC with a data‑capable USB‑C cable.
-3. Put the headset on ‑> **Allow USB debugging**.
-4. Start *Quest 2 Caster* → indicator turns **Green**.
-5. Click **Cast Screen** → scrcpy launches with the crop, bitrate, and codec you set in `cast.bat`.
+1. **Enable developer mode** in the Quest mobile app.  
+2. Plug the headset into the PC → put it on → **Allow USB debugging (Always)**.  
+3. Launch **Quest Caster** — circle turns **green**.  
+4. Click **📡 חיבור אלחוטי**. The status flips to **“מחובר אלחוטית”**.  
+5. (Optional) Unplug the cable.  
+6. Click **📺 הצג מסך** — scrcpy mirrors over Wi-Fi with the crop/bitrate you set in `cast.bat`.
 
-If the circle stays **Yellow**, you haven’t accepted the USB‑debug prompt yet.
-
----
-
-## 🛠️ Troubleshooting
-
-|  Symptom                          |  Fix                                                                               |
-| --------------------------------- | ---------------------------------------------------------------------------------- |
-| Indicator stays **Red**           |  • Check cable / port \  • `adb devices` shows nothing → install Oculus ADB driver |
-| Indicator is **Yellow**           |  Put the headset on → tap **Allow**                                                |
-| scrcpy window is black / flickers |  Try `--render-driver=direct3d` or a lower bitrate in `cast.bat`                   |
+Close the window when done; Wi-Fi ADB is automatically disconnected(not yet implemented).
 
 ---
 
-## 🤝 Contributing
+## 🛠️ Troubleshooting
 
-1. Fork → create feature branch (`git checkout -b feat/your-idea`).
-2. Commit using **Conventional Commits**; reference issues with `Fixes #n`.
-3. Push & open a Pull Request — small, focused PRs make reviews easier.
-
----
-
-## 📝 License
-
-All rights reserved to **LoginVR**. Not for sale or distribution — internal use only.
+| Symptom | Fix |
+|---------|-----|
+| **Red** circle | Check cable / port · Ensure Oculus ADB driver installed |
+| **Yellow** circle | Put the headset on → tap **Allow** |
+| scrcpy exits instantly while both links are up | Make sure *cast.bat* matches the template below |
+| Black / stuttery video | Try `--render-driver=direct3d` or lower `-b` bitrate in *cast.bat* |
 
 ---
 
-### MIT License
+## 📝 `cast.bat` template (v 2.0)
 
-```
-Copyright (c) 2025 LoginVR
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+```bat
+@echo off
+:: If %1 (serial) is supplied use it, otherwise pick first device
+if "%~1"=="" (
+    scrcpy --render-driver=opengl ^
+           --crop 1600:900:2017:510 ^
+           --no-audio -b4M --max-size 1024 ^
+           --video-codec=h264 --video-encoder=OMX.qcom.video.encoder.avc ^
+           -n
+) else (
+    scrcpy -s %1 --render-driver=opengl ^
+           --crop 1600:900:2017:510 ^
+           --no-audio -b4M --max-size 1024 ^
+           --video-codec=h264 --video-encoder=OMX.qcom.video.encoder.avc ^
+           -n
+)
 ```
 
 ---
 
-### BSD 3‑Clause License
+## 🗒️ Changelog
 
-```
-Copyright (c) 2025, LoginVR
-All rights reserved.
+* **2.0 (2025-07-05)**   Wi-Fi toggle, auto-disconnect(not yet implemented), serial-aware `cast.bat`, Pylint clean-up, UI polish.  
+* **1.x**               Initial USB-only release.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+---
 
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-3. Neither the name of LoginVR nor the names of its contributors may be used to
-   endorse or promote products derived from this software without specific
-   prior written permission.
+## 🤝 Contributing
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+1. Fork → create feature branch (`git checkout -b feat/your-idea`).  
+2. Commit using **Conventional Commits** (`feat: …`, `fix: …`).  
+3. Open a PR — small, focused changes are easiest to review.
 
+---
+
+## 📜 License
+
+All rights reserved to **LoginVR**. Internal use only.
