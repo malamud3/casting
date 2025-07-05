@@ -1,10 +1,3 @@
-
-"""
-LoginVR – Meta Quest casting helper
-Author  : Avi Kohen
-Version : 0.1.1 · 2025
-"""
-
 import os
 import re
 import subprocess
