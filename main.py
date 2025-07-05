@@ -133,7 +133,7 @@ def show_about():
     messagebox.showinfo(
         "About",
         "All rights reserved to LoginVR – internal use only\n"
-        "Created by Avi Kohen · 2025 · v0.1.1",
+        "Created by Avi Kohen · 2025 · v0.2.0",
     )
 
 
@@ -175,7 +175,7 @@ def show_faq():
 # ── connection actions ──────────────────────────────────────────────────────
 def wireless_connect():
     """Switch Quest to Wi-Fi ADB."""
-    showinfo_rtl("חיבור אלחוטי", "חבר את הקווסט בכבל והמתן לזיהוי…")
+    showinfo_rtl("חיבור אלחוטי", "חבר את המכשיר בכבל והמתן לזיהוי…")
 
     def _do():
         transport, state, _ = quest_state()
@@ -185,7 +185,7 @@ def wireless_connect():
 
         ip = _wifi_ip()
         if not ip:
-            messagebox.showerror("תקלה", "לא נמצא IP של הקווסט")
+            messagebox.showerror("תקלה", "לא נמצא ה-אייפי של המכשיר")
             return
 
         wifi = f"{ip}:{WIRELESS_PORT}"
@@ -278,10 +278,10 @@ def refresh_status(auto: bool = True):
     canvas.itemconfig(status_circle, fill=COLORS.get(key, "red"))
 
     if transport == "wifi" and state == "device":
-        status_text.set("Meta Quest מחובר אלחוטית")
+        status_text.set("מכשיר מחובר אלחוטית")
         wireless_btn.config(text="🔌 נתק אלחוטית", state="normal")
     elif state == "device":
-        status_text.set("Meta Quest מחובר")
+        status_text.set("מכשיר מחובר")
         wireless_btn.config(
             text="📡 חיבור אלחוטי",
             state="normal" if transport == "usb" else "disabled"
