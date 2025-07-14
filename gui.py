@@ -197,37 +197,37 @@ class CastingGUI:
         self.window.config(menu=menubar)
     
     def _setup_widgets(self):
-        """Set up the main widgets."""
+        """Set up the main widgets with enhanced styling."""
+        # Create main container frame
+        main_frame = tk.Frame(self.window, bg=self.window.cget('bg'))
+        main_frame.pack(fill='both', expand=True, padx=20, pady=20)
+        
         # Status indicator
-        self.status_indicator = StatusIndicator(self.window, self.config.colors)
+        self.status_indicator = StatusIndicator(main_frame, self.config.colors)
         
-        # Status text
+        # Status text with enhanced typography
         self.status_text = tk.StringVar(value="מתחבר למכשיר...")
-        tk.Label(
-            self.window, 
-            textvariable=self.status_text, 
-            font=("Arial", 12)
-        ).pack(pady=5)
+        self.status_label = ModernLabel(main_frame, self.status_text)
         
-        # Cast button
-        self.cast_btn = tk.Button(
-            self.window, 
-            text="📺 הצג מסך", 
-            font=("Arial", 12),
+        # Cast button with modern styling
+        self.cast_btn = ModernButton(
+            main_frame,
+            text="📺 הצג מסך",
             command=self._on_cast_clicked,
+            style_type='primary',
             state="disabled"
         )
-        self.cast_btn.pack(pady=15)
+        self.cast_btn.pack(pady=(10, 8))
         
-        # Wireless button
-        self.wireless_btn = tk.Button(
-            self.window, 
-            text="📡 חיבור אלחוטי", 
-            font=("Arial", 12),
+        # Wireless button with secondary styling
+        self.wireless_btn = ModernButton(
+            main_frame,
+            text="📡 חיבור אלחוטי",
             command=self._on_wireless_clicked,
+            style_type='secondary',
             state="disabled"
         )
-        self.wireless_btn.pack(pady=5)
+        self.wireless_btn.pack(pady=(0, 10))
     
     def _on_cast_clicked(self):
         """Handle cast button click."""
