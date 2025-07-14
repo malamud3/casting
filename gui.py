@@ -56,7 +56,7 @@ class AboutDialog:
             "About",
             "All rights reserved to LoginVR – internal use only\n"
             "Created by Avi Kohen · 2025 · v2.1.0\n"
-            "Refactored for better maintainability"
+            "Cross-platform refactored edition"
         )
 
 
