@@ -4,9 +4,14 @@ import logging
 import tkinter as tk
 from tkinter import ttk, messagebox
 from typing import Callable, Optional
+import platform
 
-from models import QuestDevice, AppState
+from models import QuestDevice, AppState, DeviceState
 from utils import open_email_client, open_url
+from macos_ui import (
+    MacOSStyle, ModernStatusIndicator, ModernLabel, 
+    ModernButton, EnhancedRTLDialog
+)
 
 
 logger = logging.getLogger(__name__)
@@ -18,37 +23,8 @@ class RTLDialog:
     @staticmethod
     def show_info(parent: tk.Tk, title: str, message: str, ok_text: str = "אישור"):
         """Show an RTL information dialog."""
-        dialog = tk.Toplevel(parent)
-        dialog.title(title)
-        dialog.resizable(False, False)
-        dialog.grab_set()
-        dialog.transient(parent)
-        
-        # Center the dialog on parent
-        dialog.geometry("320x150")
-        parent.update_idletasks()
-        x = parent.winfo_x() + (parent.winfo_width() // 2) - 160
-        y = parent.winfo_y() + (parent.winfo_height() // 2) - 75
-        dialog.geometry(f"320x150+{x}+{y}")
-        
-        # Message label with RTL support
-        ttk.Label(
-            dialog, 
-            text=message, 
-            justify="right", 
-            anchor="e",
-            wraplength=280, 
-            font=("Segoe UI", 10)
-        ).pack(padx=20, pady=(20, 10))
-        
-        # OK button
-        ttk.Button(
-            dialog, 
-            text=ok_text, 
-            command=dialog.destroy
-        ).pack(pady=(0, 15), ipadx=10)
-        
-        dialog.wait_window()
+        # Use the enhanced dialog from macos_ui
+        EnhancedRTLDialog.show_info(parent, title, message, ok_text)
 
 
 class InstructionsDialog:
