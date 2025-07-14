@@ -154,11 +154,28 @@ class CastingGUI:
         self.on_cast_requested: Optional[Callable] = None
         self.on_wireless_toggle: Optional[Callable] = None
         
-        # Create main window
+        # Create main window with enhanced styling
         self.window = tk.Tk()
-        self.window.iconbitmap(icon_path)
+        
+        # Apply platform-specific styling
+        MacOSStyle.apply_macos_styling(self.window)
+        
+        # Set window properties
+        if platform.system() != 'Darwin':  # Only set icon on non-macOS
+            try:
+                self.window.iconbitmap(icon_path)
+            except:
+                pass  # Ignore icon errors on macOS
+        
         self.window.title("קאסטינג LoginVR")
-        self.window.geometry("370x280")
+        
+        # Better window sizing for different platforms
+        if platform.system() == 'Darwin':  # macOS
+            self.window.geometry("400x320")
+            self.window.configure(bg='#F2F2F7')  # macOS system background
+        else:
+            self.window.geometry("370x280")
+        
         self.window.resizable(False, False)
         
         # Create dialogs
@@ -169,7 +186,7 @@ class CastingGUI:
         self._setup_menu()
         self._setup_widgets()
         
-        logger.info("GUI initialized")
+        logger.info("Enhanced GUI initialized for platform: %s", platform.system())
     
     def _setup_menu(self):
         """Set up the menu bar."""
