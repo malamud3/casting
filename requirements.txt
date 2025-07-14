@@ -1,0 +1,2 @@
+# LoginVR Quest Casting Application Requirements
+# No external dependencies - uses only Python standard library

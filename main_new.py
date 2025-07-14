@@ -33,16 +33,12 @@ class CastingApplication:
         
         # Set up paths
         self.icon_path = resource_path("temp.ico")
-        self.src_dir = resource_path("")  # Get the src directory
+        self.adb_path = resource_path("adb.exe")
+        self.src_dir = os.path.dirname(self.adb_path)
         
         # Initialize managers
-        self.adb_manager = ADBManager(self.config, self.src_dir)
+        self.adb_manager = ADBManager(self.config, self.adb_path)
         self.cast_manager = CastManager(self.config, self.src_dir)
-        
-        # Check dependencies
-        deps_ok, deps_error = self.cast_manager.check_dependencies()
-        if not deps_ok:
-            self.logger.warning(f"Missing dependencies: {deps_error}")
         
         # Initialize GUI
         self.gui = CastingGUI(self.config, self.icon_path)

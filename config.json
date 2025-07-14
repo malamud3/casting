@@ -1,0 +1,22 @@
+{
+  "refresh_interval_ms": 2000,
+  "adb_timeout_ms": 4000,
+  "wireless_port": "5555",
+  "colors": {
+    "wifi": "green",
+    "device": "green",
+    "unauthorized": "yellow",
+    "offline": "red",
+    "": "red"
+  },
+  "scrcpy": {
+    "render_driver": "opengl",
+    "crop": "1600:900:2017:510",
+    "bitrate": "4M",
+    "max_size": 1024,
+    "video_codec": "h264",
+    "video_encoder": "OMX.qcom.video.encoder.avc",
+    "no_audio": true,
+    "no_control": true
+  }
+}
