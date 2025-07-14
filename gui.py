@@ -131,19 +131,16 @@ class StatusIndicator:
     """Visual status indicator with color-coded circle."""
     
     def __init__(self, parent: tk.Widget, colors: dict):
-        self.colors = colors
+        # Use enhanced colors for better platform integration
+        enhanced_colors = MacOSStyle.get_status_colors()
+        self.colors = {**colors, **enhanced_colors}  # Merge with enhanced colors
         
-        # Create canvas for the status circle
-        self.canvas = tk.Canvas(parent, width=30, height=30, highlightthickness=0)
-        self.canvas.pack(pady=(20, 0))
-        
-        # Create the status circle
-        self.circle = self.canvas.create_oval(5, 5, 25, 25, fill="red")
+        # Use the modern status indicator
+        self.indicator = ModernStatusIndicator(parent, self.colors)
     
     def update_status(self, device: QuestDevice):
         """Update the status indicator based on device state."""
-        color = self.colors.get(device.status_key, "red")
-        self.canvas.itemconfig(self.circle, fill=color)
+        self.indicator.update_status(device)
 
 
 class CastingGUI:
