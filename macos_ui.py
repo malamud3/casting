@@ -1,103 +1,66 @@
-"""Enhanced cross-platform GUI with native styling for macOS."""
+"""DEPRECATED: Legacy macOS UI styling - Use ui_themes.py and service_factory.py instead.
 
+This file is kept for backward compatibility.
+New code should use the modular UI theme services.
+"""
+
+import warnings
 import tkinter as tk
-from tkinter import ttk
-import platform
-from typing import Optional
+from service_factory import ServiceFactory
+
+# Issue deprecation warning
+warnings.warn(
+    "macos_ui.py is deprecated. Use ServiceFactory.create_platform_service() for UI theming.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
+# Create service for backward compatibility
+_platform_service = ServiceFactory.create_platform_service()
 
 
 class MacOSStyle:
-    """macOS-specific styling and improvements."""
+    """DEPRECATED: Legacy macOS styling class."""
     
     @staticmethod
     def apply_macos_styling(window: tk.Tk):
-        """Apply macOS-specific styling to the main window."""
-        if platform.system() == 'Darwin':  # macOS
-            # Use system appearance
-            try:
-                # Enable native macOS appearance
-                window.tk.call('tk', 'scaling', 1.0)
-                
-                # Configure for macOS dark/light mode support
-                window.tk.call("source", "/System/Library/Tcl/pTk/AppKit.tcl")
-                window.tk.call("::tk::unsupported::MacWindowStyle", "style", window._w, "document", "closeBox collapseBox resizable")
-                
-                # Set native macOS window behavior
-                window.tk.call('::tk::unsupported::MacWindowStyle', 'style', window._w, 'document')
-                
-            except Exception:
-                # Fallback styling if native calls fail
-                pass
+        """DEPRECATED: Apply macOS-specific styling to the main window."""
+        warnings.warn(
+            "MacOSStyle.apply_macos_styling is deprecated. Use platform_service.apply_window_styling() instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        _platform_service.apply_window_styling(window)
     
     @staticmethod
     def get_system_font() -> tuple:
-        """Get the appropriate system font for the platform."""
-        system = platform.system()
-        
-        if system == 'Darwin':  # macOS
-            return ('SF Pro Display', 13)
-        elif system == 'Windows':
-            return ('Segoe UI', 10)
-        else:  # Linux and others
-            return ('Liberation Sans', 10)
+        """DEPRECATED: Get the appropriate system font for the platform."""
+        warnings.warn(
+            "MacOSStyle.get_system_font is deprecated. Use platform_service.get_system_font() instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return _platform_service.get_system_font()
     
     @staticmethod
     def get_button_style() -> dict:
-        """Get platform-appropriate button styling."""
-        system = platform.system()
-        
-        base_style = {
-            'relief': 'flat',
-            'borderwidth': 1,
-            'pady': 8,
-            'padx': 20
-        }
-        
-        if system == 'Darwin':  # macOS
-            base_style.update({
-                'bg': '#007AFF',
-                'fg': 'white',
-                'activebackground': '#0056CC',
-                'activeforeground': 'white',
-                'font': ('SF Pro Display', 13, 'normal'),
-                'cursor': 'pointinghand'
-            })
-        elif system == 'Windows':
-            base_style.update({
-                'bg': '#0078D4',
-                'fg': 'white',
-                'activebackground': '#106EBE',
-                'activeforeground': 'white',
-                'font': ('Segoe UI', 10, 'normal')
-            })
-        else:  # Linux
-            base_style.update({
-                'bg': '#4285F4',
-                'fg': 'white',
-                'activebackground': '#3367D6',
-                'activeforeground': 'white',
-                'font': ('Liberation Sans', 10, 'normal')
-            })
-        
-        return base_style
+        """DEPRECATED: Get platform-appropriate button styling."""
+        warnings.warn(
+            "MacOSStyle.get_button_style is deprecated. Use platform_service.get_primary_button_style() instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return _platform_service.get_primary_button_style()
     
     @staticmethod
     def get_secondary_button_style() -> dict:
-        """Get styling for secondary buttons (wireless toggle)."""
-        style = MacOSStyle.get_button_style()
-        system = platform.system()
-        
-        if system == 'Darwin':  # macOS
-            style.update({
-                'bg': '#8E8E93',
-                'activebackground': '#6D6D70'
-            })
-        elif system == 'Windows':
-            style.update({
-                'bg': '#5A5A5A',
-                'activebackground': '#4A4A4A'
-            })
-        else:  # Linux
+        """DEPRECATED: Get styling for secondary buttons."""
+        warnings.warn(
+            "MacOSStyle.get_secondary_button_style is deprecated. Use platform_service.get_secondary_button_style() instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return _platform_service.get_secondary_button_style()
             style.update({
                 'bg': '#757575',
                 'activebackground': '#616161'
