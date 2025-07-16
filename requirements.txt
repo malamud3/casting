@@ -1,2 +1,35 @@
-# LoginVR Quest Casting Application Requirements
-# No external dependencies - uses only Python standard library
+# Quest Casting Application - Professional Requirements
+
+# Core Dependencies (Required)
+pydantic>=2.0.0,<3.0.0      # Data validation and settings management
+typing-extensions>=4.0.0    # Backward compatibility for typing
+
+# GUI Dependencies
+# Tkinter is included with Python standard library
+# No additional GUI dependencies needed
+
+# Development Dependencies (Optional)
+pytest>=7.0.0               # Testing framework
+pytest-asyncio>=0.21.0      # Async testing support
+pytest-cov>=4.0.0           # Coverage reporting
+black>=23.0.0               # Code formatting
+mypy>=1.0.0                 # Type checking
+ruff>=0.1.0                 # Fast linting
+
+# Documentation Dependencies (Optional)
+sphinx>=7.0.0               # Documentation generation
+sphinx-rtd-theme>=1.3.0     # ReadTheDocs theme
+
+# Build Dependencies (Optional)
+pyinstaller>=5.0.0          # Executable building
+setuptools>=68.0.0          # Package building
+wheel>=0.41.0               # Wheel building
+
+# Platform-specific dependencies
+# adb: Android Debug Bridge (must be installed separately)
+# scrcpy: Screen copy tool (must be installed separately)
+
+# Installation Notes:
+# 1. Basic installation: pip install pydantic typing-extensions
+# 2. Development setup: pip install -r requirements.txt
+# 3. Platform tools: Download ADB and scrcpy separately

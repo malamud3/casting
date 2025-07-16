@@ -1,0 +1,71 @@
+# Quest Casting Application Configuration
+# Copy this file to config.yaml and customize as needed
+
+# Application Settings
+application:
+  title: "Quest Casting Pro"
+  version: "2.0.0"
+  theme: "auto"  # auto, light, dark
+  language: "he"  # he, en
+  auto_start_scrcpy: false
+  remember_last_device: true
+
+# Device Discovery
+device_discovery:
+  scan_timeout: 10.0  # seconds
+  wireless_port_range: [5555, 5585]
+  auto_connect_trusted: true
+  max_connection_attempts: 3
+
+# Display Settings
+display:
+  default_resolution: "1920x1080"
+  default_bitrate: "8M"
+  show_touches: true
+  stay_awake: true
+  turn_screen_off: false
+  record_format: "mp4"
+
+# Network Settings
+network:
+  connection_timeout: 30.0  # seconds
+  retry_delay: 2.0  # seconds
+  keep_alive_interval: 60.0  # seconds
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file_enabled: true
+  file_path: "logs/casting.log"
+  max_file_size: "10MB"
+  backup_count: 5
+  console_enabled: true
+
+# Error Handling
+error_handling:
+  show_technical_details: false
+  auto_report_crashes: false
+  max_error_history: 100
+
+# Performance
+performance:
+  enable_metrics: true
+  ui_update_interval: 100  # milliseconds
+  device_scan_interval: 5000  # milliseconds
+  cleanup_interval: 300  # seconds
+
+# Advanced Settings
+advanced:
+  debug_mode: false
+  enable_experimental_features: false
+  custom_adb_path: null
+  custom_scrcpy_path: null
+  environment_variables: {}
+
+# UI Layout
+ui:
+  window_size: [600, 500]
+  window_resizable: true
+  button_padding: 10
+  status_update_interval: 1000  # milliseconds
+  progress_bar_style: "modern"
