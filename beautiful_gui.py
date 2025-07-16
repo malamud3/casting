@@ -34,48 +34,27 @@ class ModernColors:
     if platform.system() == 'Darwin':
         BG_PRIMARY = "#FFFFFF"
         BG_SECONDARY = "#F5F5F7"
-        SHADOW = "#00000010"
+        SHADOW = "#E5E5E5"
     else:
         BG_PRIMARY = "#FAFAFA"
         BG_SECONDARY = "#F0F0F0"
-        SHADOW = "#00000020"
+        SHADOW = "#DDDDDD"
 
 
 class ModernCard(tk.Frame):
-    """A modern card component with shadow and rounded appearance."""
+    """A modern card component with subtle border."""
     
     def __init__(self, parent, **kwargs):
-        # Create container frame for shadow effect
-        self.container = tk.Frame(parent, bg=parent.cget('bg'))
-        
-        # Main card frame
         super().__init__(
-            self.container,
+            parent,
             bg=kwargs.get('bg', ModernColors.BG_CARD),
-            relief='flat',
-            bd=0,
+            relief='solid',
+            bd=1,
+            highlightbackground=ModernColors.SHADOW,
+            highlightthickness=1,
             padx=kwargs.get('padx', 20),
             pady=kwargs.get('pady', 20)
         )
-        
-        # Pack the card with padding for shadow effect
-        self.pack(padx=3, pady=3, fill='both', expand=True)
-        
-        # Create shadow effect (visual approximation)
-        shadow_frame = tk.Frame(
-            self.container,
-            bg=ModernColors.SHADOW,
-            height=2
-        )
-        shadow_frame.place(x=3, y=self.winfo_reqheight() + 3, relwidth=1.0)
-        
-    def pack(self, **kwargs):
-        """Override pack to apply to container."""
-        return self.container.pack(**kwargs)
-        
-    def grid(self, **kwargs):
-        """Override grid to apply to container.""" 
-        return self.container.grid(**kwargs)
 
 
 class ModernButton(tk.Button):
@@ -108,7 +87,7 @@ class ModernButton(tk.Button):
             parent,
             relief='flat',
             bd=0,
-            font=('SF Pro Display', 14, 'medium') if platform.system() == 'Darwin' else ('Segoe UI', 12, 'normal'),
+            font=('SF Pro Display', 14, 'bold') if platform.system() == 'Darwin' else ('Segoe UI', 12, 'bold'),
             cursor='hand2',
             padx=30,
             pady=12,
@@ -233,7 +212,7 @@ class ModernLabel(tk.Label):
     
     def __init__(self, parent, textvariable=None, style='primary', **kwargs):
         if style == 'primary':
-            font_config = ('SF Pro Display', 16, 'medium') if platform.system() == 'Darwin' else ('Segoe UI', 14, 'normal')
+            font_config = ('SF Pro Display', 16, 'bold') if platform.system() == 'Darwin' else ('Segoe UI', 14, 'bold')
             color = ModernColors.TEXT_PRIMARY
         elif style == 'secondary':
             font_config = ('SF Pro Text', 14, 'normal') if platform.system() == 'Darwin' else ('Segoe UI', 12, 'normal')

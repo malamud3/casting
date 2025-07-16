@@ -44,7 +44,7 @@ class GUIBeautyDemo:
             text="🎨 Beautiful GUI Demo - Click to cycle through states",
             bg=ModernColors.BG_SECONDARY,
             fg=ModernColors.TEXT_PRIMARY,
-            font=('SF Pro Display', 12, 'medium') if hasattr(tk.font, 'Font') else ('Arial', 11),
+            font=('SF Pro Display', 12, 'bold') if hasattr(tk.font, 'Font') else ('Arial', 11, 'bold'),
             pady=10
         ).pack()
         
