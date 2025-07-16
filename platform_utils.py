@@ -1,99 +1,67 @@
-"""Cross-platform utilities for the casting application."""
+"""DEPRECATED: Legacy platform utilities - Use service_factory.py instead.
 
-import os
-import platform
-import subprocess
-from typing import List, Optional
+This file is kept for backward compatibility. 
+New code should use the modular services from service_factory.py
+"""
 
+import warnings
+from service_factory import ServiceFactory
+
+# Issue deprecation warning
+warnings.warn(
+    "platform_utils.py is deprecated. Use ServiceFactory.create_platform_service() instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
+# Create a singleton instance for backward compatibility
+_service = ServiceFactory.create_platform_service()
 
 class PlatformManager:
-    """Manages platform-specific operations and file paths."""
+    """DEPRECATED: Legacy wrapper around the new modular platform service."""
     
     def __init__(self):
-        self.system = platform.system().lower()
-        self.is_windows = self.system == "windows"
-        self.is_macos = self.system == "darwin"
-        self.is_linux = self.system == "linux"
+        warnings.warn(
+            "PlatformManager is deprecated. Use ServiceFactory.create_platform_service() instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        self.service = _service
+    
+    @property
+    def system(self):
+        return self.service.get_platform_name()
+    
+    @property
+    def is_windows(self):
+        return self.service.is_windows()
+    
+    @property
+    def is_macos(self):
+        return self.service.is_macos()
+    
+    @property
+    def is_linux(self):
+        return self.service.is_linux()
     
     def get_adb_executable(self, src_dir: str) -> str:
-        """Get the appropriate ADB executable for the current platform."""
-        if self.is_windows:
-            return os.path.join(src_dir, "adb.exe")
-        else:
-            # On macOS/Linux, try system ADB first, then bundled version
-            system_adb = self._find_system_executable("adb")
-            if system_adb:
-                return system_adb
-            return os.path.join(src_dir, "adb")
+        return self.service.get_adb_executable(src_dir)
     
     def get_scrcpy_executable(self, src_dir: str) -> str:
-        """Get the appropriate scrcpy executable for the current platform."""
-        if self.is_windows:
-            return os.path.join(src_dir, "scrcpy.exe")
-        else:
-            # On macOS/Linux, try system scrcpy first, then bundled version
-            system_scrcpy = self._find_system_executable("scrcpy")
-            if system_scrcpy:
-                return system_scrcpy
-            return os.path.join(src_dir, "scrcpy")
+        return self.service.get_scrcpy_executable(src_dir)
     
     def get_subprocess_flags(self) -> dict:
-        """Get platform-appropriate subprocess flags."""
-        if self.is_windows:
-            return {"creationflags": 0x08000000}  # CREATE_NO_WINDOW
-        else:
-            return {}
+        return self.service.get_subprocess_flags()
     
-    def run_casting_command(self, scrcpy_path: str, args: List[str], src_dir: str) -> subprocess.Popen:
-        """Run the casting command with platform-appropriate method."""
-        cmd = [scrcpy_path] + args
-        
-        subprocess_flags = self.get_subprocess_flags()
-        
-        return subprocess.Popen(
-            cmd,
-            cwd=src_dir,
-            **subprocess_flags
-        )
+    def run_casting_command(self, scrcpy_path: str, args: list, src_dir: str):
+        return self.service.run_casting_command(scrcpy_path, args, src_dir)
     
-    def _find_system_executable(self, name: str) -> Optional[str]:
-        """Find an executable in the system PATH."""
-        try:
-            result = subprocess.run(
-                ["which", name] if not self.is_windows else ["where", name],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            return result.stdout.strip().split('\n')[0] if result.stdout else None
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            return None
+    def _find_system_executable(self, name: str):
+        return self.service.find_system_executable(name)
     
     def get_installation_instructions(self) -> str:
-        """Get platform-specific installation instructions for missing dependencies."""
-        if self.is_macos:
-            return """
-macOS Installation:
-1. Install Homebrew: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-2. Install dependencies: brew install scrcpy android-platform-tools
-3. Enable developer mode on Quest and connect via USB
-            """
-        elif self.is_linux:
-            return """
-Linux Installation:
-1. Ubuntu/Debian: sudo apt install scrcpy adb
-2. Fedora: sudo dnf install scrcpy android-tools
-3. Arch: sudo pacman -S scrcpy android-tools
-4. Enable developer mode on Quest and connect via USB
-            """
-        else:
-            return """
-Windows Installation:
-1. Download ADB and scrcpy executables to src/ folder
-2. Install Oculus ADB drivers
-3. Enable developer mode on Quest and connect via USB
-            """
+        return self.service.get_installation_instructions()
 
 
-# Global platform manager instance
+# Global platform manager instance for backward compatibility
 platform_manager = PlatformManager()
