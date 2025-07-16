@@ -15,7 +15,7 @@ from config import load_config, AppConfig
 from models import AppState, QuestDevice, Transport, DeviceState
 from adb_manager import ADBManager
 from cast_manager import CastManager
-from gui import CastingGUI
+from beautiful_gui import CastingGUI
 from utils import resource_path, setup_logging
 
 
