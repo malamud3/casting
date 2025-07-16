@@ -11,127 +11,126 @@ from models import QuestDevice, DeviceState
 from utils import open_email_client, open_url
 
 
-class ModernColors:
-    """Modern color palette for the application."""
+class AppleColors:
+    """Apple-inspired color palette for native macOS look."""
     
-    # Primary colors
-    PRIMARY_BLUE = "#0A84FF"
-    PRIMARY_GREEN = "#30D158"
-    PRIMARY_RED = "#FF453A"
-    PRIMARY_ORANGE = "#FF9F0A"
+    # Apple System Colors
+    SYSTEM_BLUE = "#007AFF"
+    SYSTEM_GREEN = "#34C759"
+    SYSTEM_RED = "#FF3B30"
+    SYSTEM_ORANGE = "#FF9500"
+    SYSTEM_PURPLE = "#AF52DE"
     
-    # Background colors
+    # Background colors (macOS Big Sur/Monterey style)
     BG_PRIMARY = "#FFFFFF"
     BG_SECONDARY = "#F2F2F7"
-    BG_CARD = "#FFFFFF"
+    BG_TERTIARY = "#F9F9F9"
+    BG_SIDEBAR = "#ECECEC"
     
     # Text colors
-    TEXT_PRIMARY = "#000000"
-    TEXT_SECONDARY = "#8E8E93"
+    TEXT_PRIMARY = "#1D1D1F"
+    TEXT_SECONDARY = "#86868B"
+    TEXT_TERTIARY = "#A1A1A6"
     TEXT_WHITE = "#FFFFFF"
     
-    # macOS specific
-    if platform.system() == 'Darwin':
-        BG_PRIMARY = "#FFFFFF"
-        BG_SECONDARY = "#F5F5F7"
-        SHADOW = "#E5E5E5"
-    else:
-        BG_PRIMARY = "#FAFAFA"
-        BG_SECONDARY = "#F0F0F0"
-        SHADOW = "#DDDDDD"
-
-
-class ModernCard(tk.Frame):
-    """A modern card component with subtle border."""
+    # Apple specific elements
+    CONTROL_ACCENT = "#007AFF"
+    SEPARATOR = "#D1D1D6"
+    SHADOW = "#00000008"
+    GLASS_EFFECT = "#FFFFFF85"
     
-    def __init__(self, parent, **kwargs):
-        super().__init__(
-            parent,
-            bg=kwargs.get('bg', ModernColors.BG_CARD),
-            relief='solid',
-            bd=1,
-            highlightbackground=ModernColors.SHADOW,
-            highlightthickness=1,
-            padx=kwargs.get('padx', 20),
-            pady=kwargs.get('pady', 20)
-        )
+    # Window chrome
+    WINDOW_CHROME = "#ECECEC"
+    TRAFFIC_LIGHT_RED = "#FF5F56"
+    TRAFFIC_LIGHT_YELLOW = "#FFBD2E"
+    TRAFFIC_LIGHT_GREEN = "#27CA3F"
 
 
-class ModernButton(tk.Button):
-    """A modern, beautiful button with hover effects."""
+class AppleButton(tk.Button):
+    """Apple-style button with native macOS appearance."""
     
-    def __init__(self, parent, style_type='primary', **kwargs):
-        self.style_type = style_type
+    def __init__(self, parent, style='primary', **kwargs):
+        self.style = style
         self.is_hovered = False
+        self.is_pressed = False
         
-        # Define style colors
-        if style_type == 'primary':
-            self.bg_normal = ModernColors.PRIMARY_BLUE
+        # Apple button styles
+        if style == 'primary':
+            self.bg_normal = AppleColors.SYSTEM_BLUE
             self.bg_hover = "#0051D5"
-            self.fg_color = ModernColors.TEXT_WHITE
-        elif style_type == 'success':
-            self.bg_normal = ModernColors.PRIMARY_GREEN
-            self.bg_hover = "#28CD54"
-            self.fg_color = ModernColors.TEXT_WHITE
-        elif style_type == 'danger':
-            self.bg_normal = ModernColors.PRIMARY_RED
-            self.bg_hover = "#FF2D20"
-            self.fg_color = ModernColors.TEXT_WHITE
+            self.bg_pressed = "#004CCC"
+            self.fg_color = AppleColors.TEXT_WHITE
+            self.font_weight = 'bold'
+        elif style == 'destructive':
+            self.bg_normal = AppleColors.SYSTEM_RED
+            self.bg_hover = "#D70015"
+            self.bg_pressed = "#C20015"
+            self.fg_color = AppleColors.TEXT_WHITE
+            self.font_weight = 'bold'
+        elif style == 'prominent':
+            self.bg_normal = AppleColors.SYSTEM_GREEN
+            self.bg_hover = "#248A3D"
+            self.bg_pressed = "#1E7A35"
+            self.fg_color = AppleColors.TEXT_WHITE
+            self.font_weight = 'bold'
         else:  # secondary
-            self.bg_normal = ModernColors.BG_SECONDARY
+            self.bg_normal = AppleColors.BG_SECONDARY
             self.bg_hover = "#E5E5EA"
-            self.fg_color = ModernColors.PRIMARY_BLUE
+            self.bg_pressed = "#D1D1D6"
+            self.fg_color = AppleColors.SYSTEM_BLUE
+            self.font_weight = 'normal'
             
-        # Create button with modern styling
         super().__init__(
             parent,
             relief='flat',
             bd=0,
-            font=('Helvetica', 14, 'bold'),
-            cursor='hand2',
-            padx=30,
-            pady=12,
+            font=('.AppleSystemUIFont', 14, self.font_weight),
+            cursor='pointinghand',  # macOS style cursor
+            padx=24,
+            pady=10,
             bg=self.bg_normal,
             fg=self.fg_color,
             activebackground=self.bg_hover,
             activeforeground=self.fg_color,
-            **kwargs
+            **{k: v for k, v in kwargs.items() if k not in ['style']}
         )
         
-        # Bind hover effects
+        # Bind Apple-style interactions
         self.bind('<Enter>', self._on_enter)
         self.bind('<Leave>', self._on_leave)
+        self.bind('<Button-1>', self._on_press)
+        self.bind('<ButtonRelease-1>', self._on_release)
         
     def _on_enter(self, event):
-        """Handle mouse enter (hover)."""
         if self['state'] != 'disabled':
             self.configure(bg=self.bg_hover)
             self.is_hovered = True
             
     def _on_leave(self, event):
-        """Handle mouse leave."""
         if self['state'] != 'disabled':
-            self.configure(bg=self.bg_normal)
+            self.configure(bg=self.bg_pressed if self.is_pressed else self.bg_normal)
             self.is_hovered = False
             
+    def _on_press(self, event):
+        if self['state'] != 'disabled':
+            self.configure(bg=self.bg_pressed)
+            self.is_pressed = True
+            
+    def _on_release(self, event):
+        if self['state'] != 'disabled':
+            self.configure(bg=self.bg_hover if self.is_hovered else self.bg_normal)
+            self.is_pressed = False
+            
     def configure(self, **kwargs):
-        """Override configure to handle disabled state styling."""
-        # Remove custom options that tkinter doesn't understand
-        custom_options = ['style_type']
+        # Filter out custom options
+        custom_options = ['style']
         filtered_kwargs = {k: v for k, v in kwargs.items() if k not in custom_options}
         
         if 'state' in kwargs:
             if kwargs['state'] == 'disabled':
                 super().configure(
-                    bg=ModernColors.BG_SECONDARY,
-                    fg=ModernColors.TEXT_SECONDARY,
-                    **filtered_kwargs
-                )
-                return
-            elif kwargs['state'] == 'normal' and not self.is_hovered:
-                super().configure(
-                    bg=self.bg_normal,
-                    fg=self.fg_color,
+                    bg=AppleColors.BG_SECONDARY,
+                    fg=AppleColors.TEXT_TERTIARY,
                     **filtered_kwargs
                 )
                 return
