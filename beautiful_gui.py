@@ -161,19 +161,19 @@ class StatusIndicator(tk.Canvas):
         if device.is_wifi and device.is_authorized:
             color = ModernColors.PRIMARY_GREEN
             icon = "📡"
-            pulse_color = "#30D15850"
+            pulse_color = "#90EE90"  # Light green
         elif device.is_authorized:
             color = ModernColors.PRIMARY_GREEN  
             icon = "✓"
-            pulse_color = "#30D15850"
+            pulse_color = "#90EE90"  # Light green
         elif device.state == DeviceState.UNAUTHORIZED:
             color = ModernColors.PRIMARY_ORANGE
             icon = "⚠"
-            pulse_color = "#FF9F0A50"
+            pulse_color = "#FFD700"  # Light orange
         else:
             color = ModernColors.PRIMARY_RED
             icon = "✕"
-            pulse_color = "#FF453A50"
+            pulse_color = "#FFB6C1"  # Light red
             
         # Draw outer pulse ring
         pulse_radius = self.radius + 8
@@ -195,7 +195,7 @@ class StatusIndicator(tk.Canvas):
         self.create_oval(
             self.center - shadow_radius, self.center - shadow_radius,
             self.center + shadow_radius, self.center + shadow_radius,
-            outline=f"{color}80", width=1, fill=""
+            outline="#CCCCCC", width=1, fill=""
         )
         
         # Add icon
