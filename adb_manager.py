@@ -69,8 +69,13 @@ class ADBManager:
         logger.debug(f"ADB devices output: {devices_output}")
         
         for line in devices_output.splitlines()[1:]:  # Skip header
+            line = line.strip()
+            if not line:  # Skip empty lines
+                continue
+                
             parts = line.split()
             if len(parts) < 2:
+                logger.debug(f"Skipping line with insufficient parts: {line}")
                 continue
                 
             serial, state_str = parts[0], parts[1]
@@ -96,6 +101,7 @@ class ADBManager:
         
         if detected_device is None:
             # No devices found
+            logger.debug("No Quest devices detected via ADB")
             detected_device = QuestDevice(
                 Transport.UNKNOWN, 
                 DeviceState.UNKNOWN, 
