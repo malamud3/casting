@@ -116,23 +116,27 @@ class ModernButton(tk.Button):
             
     def configure(self, **kwargs):
         """Override configure to handle disabled state styling."""
+        # Remove custom options that tkinter doesn't understand
+        custom_options = ['style_type']
+        filtered_kwargs = {k: v for k, v in kwargs.items() if k not in custom_options}
+        
         if 'state' in kwargs:
             if kwargs['state'] == 'disabled':
                 super().configure(
                     bg=ModernColors.BG_SECONDARY,
                     fg=ModernColors.TEXT_SECONDARY,
-                    **kwargs
+                    **filtered_kwargs
                 )
                 return
             elif kwargs['state'] == 'normal' and not self.is_hovered:
                 super().configure(
                     bg=self.bg_normal,
                     fg=self.fg_color,
-                    **kwargs
+                    **filtered_kwargs
                 )
                 return
                 
-        super().configure(**kwargs)
+        super().configure(**filtered_kwargs)
 
 
 class StatusIndicator(tk.Canvas):
