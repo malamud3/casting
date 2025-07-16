@@ -58,7 +58,7 @@ class GUIBeautyDemo:
             text=f"Current: {self.demo_states[self.current_state][0]}",
             bg=ModernColors.BG_SECONDARY,
             fg=ModernColors.PRIMARY_BLUE,
-            font=('SF Pro Text', 10) if hasattr(tk.font, 'Font') else ('Arial', 9)
+            font=('Arial', 9)
         )
         self.state_label.pack(pady=(0, 10))
         

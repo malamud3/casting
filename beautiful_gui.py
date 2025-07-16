@@ -87,7 +87,7 @@ class ModernButton(tk.Button):
             parent,
             relief='flat',
             bd=0,
-            font=('SF Pro Display', 14, 'bold') if platform.system() == 'Darwin' else ('Segoe UI', 12, 'bold'),
+            font=('Helvetica', 14, 'bold'),
             cursor='hand2',
             padx=30,
             pady=12,
@@ -202,7 +202,7 @@ class StatusIndicator(tk.Canvas):
         self.create_text(
             self.center, self.center,
             text=icon,
-            font=('SF Pro Display', 20) if platform.system() == 'Darwin' else ('Segoe UI', 18),
+            font=('Helvetica', 20, 'bold'),
             fill="white"
         )
 
@@ -212,13 +212,13 @@ class ModernLabel(tk.Label):
     
     def __init__(self, parent, textvariable=None, style='primary', **kwargs):
         if style == 'primary':
-            font_config = ('SF Pro Display', 16, 'bold') if platform.system() == 'Darwin' else ('Segoe UI', 14, 'bold')
+            font_config = ('Helvetica', 16, 'bold')
             color = ModernColors.TEXT_PRIMARY
         elif style == 'secondary':
-            font_config = ('SF Pro Text', 14, 'normal') if platform.system() == 'Darwin' else ('Segoe UI', 12, 'normal')
+            font_config = ('Helvetica', 14, 'normal')
             color = ModernColors.TEXT_SECONDARY
         else:  # title
-            font_config = ('SF Pro Display', 24, 'bold') if platform.system() == 'Darwin' else ('Segoe UI', 20, 'bold')
+            font_config = ('Helvetica', 24, 'bold')
             color = ModernColors.TEXT_PRIMARY
             
         super().__init__(
