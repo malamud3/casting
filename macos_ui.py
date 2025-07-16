@@ -59,7 +59,7 @@ class MacOSStyle:
                 'fg': 'white',
                 'activebackground': '#0056CC',
                 'activeforeground': 'white',
-                'font': ('SF Pro Display', 13, 'medium'),
+                'font': ('SF Pro Display', 13, 'normal'),
                 'cursor': 'pointinghand'
             })
         elif system == 'Windows':
@@ -154,7 +154,7 @@ class ModernStatusIndicator:
         # Create the status circle with shadow effect on macOS
         if self.system == 'Darwin':
             # Shadow circle for depth
-            self.shadow = self.canvas.create_oval(2, 2, 38, 38, fill="#00000020", outline="")
+            self.shadow = self.canvas.create_oval(2, 2, 38, 38, fill="#E0E0E0", outline="")
             # Main circle
             self.circle = self.canvas.create_oval(0, 0, 36, 36, fill="#FF453A", outline="white", width=2)
         else:
