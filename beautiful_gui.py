@@ -412,7 +412,7 @@ class BeautifulCastingGUI:
             bd=0,
             bg=ModernColors.BG_PRIMARY,
             fg=ModernColors.PRIMARY_BLUE,
-            font=('SF Pro Text', 12) if platform.system() == 'Darwin' else ('Segoe UI', 10),
+            font=('Helvetica', 12),
             cursor='hand2',
             command=self.show_help
         )
@@ -426,7 +426,7 @@ class BeautifulCastingGUI:
             bd=0,
             bg=ModernColors.BG_PRIMARY,
             fg=ModernColors.PRIMARY_BLUE,
-            font=('SF Pro Text', 12) if platform.system() == 'Darwin' else ('Segoe UI', 10),
+            font=('Helvetica', 12),
             cursor='hand2',
             command=self.show_instructions
         )
